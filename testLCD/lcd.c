@@ -1,5 +1,5 @@
 /*************************************************************
- *       at328-5.c - Demonstrate interface to a parallel LCD display
+ *       lcd.c - Demonstrate interface to a parallel LCD display
  *
  *       This program will print a message on an LCD display
  *       using the 4-bit wide interface method
@@ -60,11 +60,11 @@ void lcd_clear();
  instead of in RAM.
  */
 #ifdef NIBBLE_HIGH
-const unsigned char str1[] PROGMEM = ">> at328-5.c hi <<901234";
+const unsigned char str1[] PROGMEM = ">> at328-5.c hi <<90";
 #else
-const unsigned char str1[] PROGMEM = ">> at328-5.c lo <<901234";
+const unsigned char str1[] PROGMEM = ">> at328-5.c lo <<90";
 #endif
-const unsigned char str2[] PROGMEM = ">> USC EE459L <<78901234";
+const unsigned char str2[] PROGMEM = ">> USC EE459L <<7890";
 
 #define LCD_RS          (1 << PB4)
 #define LCD_RW          (1 << PB3)
@@ -83,15 +83,15 @@ const unsigned char str2[] PROGMEM = ">> USC EE459L <<78901234";
 int main(void) {
     
     lcd_init();                 // Initialize the LCD display
-//    lcd_clear();
     lcd_moveto(0, 0);
     lcd_stringout_P((char *)str1);      // Print string on line 1
 
     lcd_moveto(1, 0);
     lcd_stringout_P((char *)str2);      // Print string on line 2
-    
-//    lcd_moveto(2,0);
-//    lcd_stringout_P((char *)str3);
+
+    lcd_clear();
+
+
     
     while (1) {                 // Loop forever
     }
@@ -263,19 +263,10 @@ void lcd_wait()
 }
 
 /*
- lcd_clear - Clears data to be displayed
+ lcd_clear clears entire screen
  */
-//void lcd_clear()
-//{
-//
-//    const unsigned char line1[] PROGMEM = "                        ";
-//
-//    const unsigned char line2[] PROGMEM = "                        ";
-//
-//    lcd_moveto(0, 0);
-//    lcd_stringout_P((char *)line1);      // Print string on line 1
-//
-//    lcd_moveto(1, 0);
-//    lcd_stringout_P((char *)line2);      // Print string on line 2
-//}
-
+void lcd_clear()
+{
+    lcd_moveto(0,0);
+    lcd_writecommand(0x01);
+}
