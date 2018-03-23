@@ -33,7 +33,6 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/pgmspace.h>
-//#include "Keypad.h"
 
 /*
  The NIBBLE_HIGH condition determines which PORT bits are used to
@@ -54,6 +53,9 @@ void lcd_writenibble(unsigned char);
 void lcd_wait(void);
 void lcd_stringout_P(char *);
 void lcd_clear();
+
+char Keypad();
+int SelectRow();
 
 /*
  Use the "PROGMEM" attribute to store the strings in the ROM
@@ -85,15 +87,17 @@ int main(void) {
     lcd_init();                 // Initialize the LCD display
     lcd_moveto(0, 0);
     lcd_stringout_P((char *)str1);      // Print string on line 1
-
+    
     lcd_moveto(1, 0);
     lcd_stringout_P((char *)str2);      // Print string on line 2
-
+    
     lcd_clear();
-
-
+    
+    char number = Keypad();
+    lcd_writedata(number);
     
     while (1) {                 // Loop forever
+        
     }
     
     return 0;   /* never reached */
@@ -130,6 +134,8 @@ void lcd_init(void)
     DDRB |= LCD_Bits;           // Set PORTB bits 2, 3 and 4 for output
     
     PORTB &= ~LCD_RS;           // Clear RS for command write
+    
+    
     
     _delay_ms(15);              // Delay at least 15ms
     
@@ -270,3 +276,88 @@ void lcd_clear()
     lcd_moveto(0,0);
     lcd_writecommand(0x01);
 }
+
+/*
+ Read Keypad
+ */
+char Keypad()
+{
+    
+    // Set columns as output
+    DDRC |= (1 << DDC0); // Column 0
+    DDRC |= (1 << DDC1); // Column 1
+    DDRC |= (1 << DDC2); // Column 2
+    
+    // Pull up resistors for inputs
+    PINC |= (1 << DDC3); // Row 3 (*,0,#)
+    PINC |= (1 << DDC4); // Row 2 (7,8,9)
+    PINC |= (1 << DDC5); // Row 1 (4,5,6)
+    PIND |= (1 << PD0);    // Row 0 (1,2,3)
+    
+    // Define keypad
+    int ROWS = 4;
+    int COLS = 3;
+    char keys[4][3] = {
+        {'1','2','3'},
+        {'4','5','6'},
+        {'7','8','9'},
+        {'*','0','#'}
+    };
+    
+    int column = 0;
+    int row = 0;
+    // For loop causing issues
+    for(column = 0; column < 3; column++)
+    {
+        
+        // Shortened version
+        // Set column port to 0
+        PORTC &= ~(1 << column);
+        row = SelectRow();
+        // Toggle column port to 1
+        PORTC |= (1 << column);
+    
+//    uint8_t r,c;
+//    for(c = 0; c < 3; c++)
+//    {
+//        PORTC &= ~(1 << c);
+//        for(r = 0; r < 4; r++)
+//        {
+//            if(!(PIND & ~(1 << r)))
+//        }
+//    }
+    }
+    
+    return keys[row][column];
+}
+
+int SelectRow()
+{
+    int row = 0;
+    // Loop thru column
+    for(int j = 3; j < 7; j++)
+    {
+        // Last iteration case
+        row = j;
+        if(j == 6)
+        {
+            row = 0;
+            if(!(PIND & ~(1 << row)))
+            {
+                // PD0 pressed
+                row = 0;
+            }
+        }
+        else
+        {
+            // First 3 iteration cases
+            if(!(PINC & ~(1 << row)))
+            {
+                // PC row pressed
+                row = 6 - j;
+            }
+        }
+    }
+    return row;
+}
+
