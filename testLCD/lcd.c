@@ -30,84 +30,35 @@
  * 05/06/17 A. Weber    Change to use new LCD routines
  *************************************************************/
 
-#include <avr/io.h>
-#include <util/delay.h>
-#include <avr/pgmspace.h>
+#include "lcd.h"
 
-/*
- The NIBBLE_HIGH condition determines which PORT bits are used to
- transfer data to data bits 4-7 of the LCD.
- If LCD data bits 4-7 are connected to PORTD, bits 4-7, define NIBBLE_HIGH
- If LCD data bits 4-7 are connected to PORTD, bits 2-3 and PORTB bits 0-1,
- don't define NIBBLE_HIGH.
- */
-#define NIBBLE_HIGH                 // Use bits 4-7 for talking to LCD
 
-void lcd_init(void);
-void lcd_moveto(unsigned char, unsigned char);
-void lcd_stringout(char *);
-void lcd_writecommand(unsigned char);
-void lcd_writedata(unsigned char);
-void lcd_writebyte(unsigned char);
-void lcd_writenibble(unsigned char);
-void lcd_wait(void);
-void lcd_stringout_P(char *);
-void lcd_clear();
-
-char Keypad();
-int SelectRow();
-
-/*
- Use the "PROGMEM" attribute to store the strings in the ROM
- instead of in RAM.
- */
-#ifdef NIBBLE_HIGH
-const unsigned char str1[] PROGMEM = ">> at328-5.c hi <<90";
-#else
-const unsigned char str1[] PROGMEM = ">> at328-5.c lo <<90";
-#endif
-const unsigned char str2[] PROGMEM = ">> USC EE459L <<7890";
-
-#define LCD_RS          (1 << PB4)
-#define LCD_RW          (1 << PB3)
-#define LCD_E           (1 << PB2)
-#define LCD_Bits        (LCD_RS|LCD_RW|LCD_E)
-
-#ifdef NIBBLE_HIGH
-#define LCD_Data_D     0xf0     // Bits in Port D for LCD data
-#define LCD_Status     0x80     // Bit in Port D for LCD busy status
-#else
-#define LCD_Data_B     0x03     // Bits in Port B for LCD data
-#define LCD_Data_D     0x0c     // Bits in Port D for LCD data
-#define LCD_Status     (1 << PD7) // Bit in Port D for LCD busy status
-#endif
-
-int main(void) {
-    
-    lcd_init();                 // Initialize the LCD display
-    lcd_moveto(0, 0);
-    lcd_stringout_P((char *)str1);      // Print string on line 1
-    
-    lcd_moveto(1, 0);
-    lcd_stringout_P((char *)str2);      // Print string on line 2
-    
-    lcd_clear();
-    
-    
-    char displayChar;
-    while (1) {                 // Loop forever
-        
-        displayChar = Keypad();
-        
-        if(displayChar > 34 && displayChar < 58)
-        {
-            lcd_moveto(0,0);
-            lcd_writedata(displayChar);
-        }
-    }
-    
-    return 0;   /* never reached */
-}
+//int main(void) {
+//
+//    lcd_init();                 // Initialize the LCD display
+//    lcd_moveto(0, 0);
+//    lcd_stringout_P((char *)str1);      // Print string on line 1
+//
+//    lcd_moveto(1, 0);
+//    lcd_stringout_P((char *)str2);      // Print string on line 2
+//
+//    lcd_clear();
+//
+//
+//    char displayChar;
+//    while (1) {                 // Loop forever
+//
+//        displayChar = Keypad();
+//
+//        if(displayChar > 34 && displayChar < 58)
+//        {
+//            lcd_moveto(0,0);
+//            lcd_writedata(displayChar);
+//        }
+//    }
+//
+//    return 0;   /* never reached */
+//}
 
 /*
  lcd_stringout_P - Print the contents of the character string "s" starting at LCD
@@ -281,57 +232,4 @@ void lcd_clear()
 {
     lcd_moveto(0,0);
     lcd_writecommand(0x01);
-}
-
-/*
- Read Keypad
- */
-char Keypad()
-{
-    
-    // Set columns as output
-    DDRC |= (1 << DDC0); // Column 0
-    DDRC |= (1 << DDC1); // Column 1
-    DDRC |= (1 << DDC2); // Column 2
-    
-    // Pull up resistors for inputs
-    PORTC |= (1 << DDC3); // Row 3 (*,0,#)
-    PORTC |= (1 << DDC4); // Row 2 (7,8,9)
-    PORTC |= (1 << DDC5); // Row 1 (4,5,6)
-    PORTD |= (1 << PD0);    // Row 0 (1,2,3)
-    
-    // Define keypad
-    char keys[4][3] = {
-        {'*','0','#'},
-        {'7','8','9'},
-        {'4','5','6'},
-        {'1','2','3'}
-    };
-    
-    uint8_t r,c;
-    for(c = 0; c < 3; c++)      // Loop through columns
-    {
-        PORTC |= 0X07;          // Set all bits hi
-        PORTC &= ~(1 << c);
-        for(r = 3; r < 7; r++)  // Loop through rows
-        {
-            if(r == 6)
-            {
-                if(!(PIND & (0x01 << PD0)))        // Read PIND0
-                {
-                    return keys[0][c];
-                }
-            }
-            else
-            {
-                // Checks row 3 first
-                if(!(PINC & (0x01 << r)))    // Read PINC3-5
-                {
-                    return keys[6-r][c];
-                }
-            }
-        }
-//        _delay_ms(200);
-    }
-    return '<';
 }
