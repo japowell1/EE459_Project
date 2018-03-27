@@ -29,7 +29,6 @@ const unsigned char str3[] PROGMEM = "Enter password:";
 void typeKeys();
 void initial();
 void lock();
-<<<<<<< HEAD
 void unlock();
 void readPassword();
 
@@ -140,16 +139,12 @@ return 0;
 void typeKeys(){
     char displayChar;
     displayChar = Keypad();
->>>>>>> e5f1cf61181f72f6859dfff84f93516ee739354d
     if (displayChar != '<')
     {
         if(displayChar > 34 && displayChar < 58)
         {
-<<<<<<< HEAD
             lcd_moveto(2,position);
-=======
             lcd_moveto(1,count);
->>>>>>> e5f1cf61181f72f6859dfff84f93516ee739354d
             lcd_writedata(displayChar);
             passCount++;
         }
@@ -191,7 +186,6 @@ void typeKeys(){
         //        }
         count++;
     }
-<<<<<<< HEAD
 }
 
 // Initial setup display
@@ -259,7 +253,6 @@ void unlock()
 
 }
 
-=======
 }
 
 
@@ -301,4 +294,4 @@ void readPassword()
 //        typeKeys();
 //    }
 //}
->>>>>>> e5f1cf61181f72f6859dfff84f93516ee739354d
+
