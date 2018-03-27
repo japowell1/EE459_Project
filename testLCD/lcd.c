@@ -121,6 +121,7 @@ void lcd_moveto(unsigned char row, unsigned char col)
 {
     unsigned char pos;
     pos = row * 0x40 + col;
+<<<<<<< HEAD
     
     if(row == 2)
     {
@@ -132,6 +133,17 @@ void lcd_moveto(unsigned char row, unsigned char col)
     }
     lcd_writecommand(0x80 | pos);
 
+=======
+    if(row == 2){
+        pos = 0x14 + col;
+    }
+    else if(row == 3){
+        pos = 0x54 + col;
+    }
+
+    lcd_writecommand(0x80 | pos);
+    
+>>>>>>> e5f1cf61181f72f6859dfff84f93516ee739354d
 }
 
 /*
