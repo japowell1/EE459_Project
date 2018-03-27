@@ -36,11 +36,9 @@ void readPassword();
 volatile char setPasscode[6], tempPasscode[6];
 volatile int passCount;
 volatile int position, state;
-=======
 void start();
 
 volatile int count, state;
->>>>>>> e5f1cf61181f72f6859dfff84f93516ee739354d
 
 enum states
 {
@@ -55,7 +53,6 @@ int main(void)
     lcd_init();                 // Initialize the LCD display
     lcd_clear();
     lcd_moveto(0, 0);
-<<<<<<< HEAD
 
     // Initialize Global Variables
     state = initState;
@@ -106,7 +103,6 @@ void typeKeys()
     }
     
     // Display to LCD
-=======
     //    lcd_stringout_P((char *)str1);      // Print string on line 1
     //
     //    lcd_moveto(1, 0);
