@@ -36,7 +36,9 @@ char Keypad()
     for(c = 0; c < 3; c++)      // Loop through columns
     {
         PORTC |= 0X07;          // Set all bits hi
+        
         PORTC &= ~(1 << c);
+        
         for(r = 3; r < 7; r++)  // Loop through rows
         {
             if(r == 6)
