@@ -55,6 +55,7 @@ int main(void)
     state = initState;
     position = 0;
     passCount = 0;
+    isCorrect = 1;
     
     
     while (1)
@@ -86,53 +87,40 @@ void typeKeys()
     displayChar = Keypad();
     
     char* currentPos = setPasscode;
-    char* currentTemp = tempPasscode;
-    
-    // Default flag to true
-    isCorrect = 1;
-    
-    // Capturing into passcodes
-    if(state == initState)
-    {
-        // Add to setPasscode
-        setPasscode[passCount] = displayChar;
-        if(passCount == 6)
-        {
-            setPasscode[6] = '\0';
-        }
-    }
-    else if(state == unlock)
-    {
-        // Add to tempPasscode
-        if(setPasscode[passCount] != displayChar)
-        {
-            // Set flag to false
-            isCorrect = 0;
-        }
-    }
-    else if(state == lockState)
-    {
-        // Add to tempPasscode
-        if(setPasscode[passCount] != displayChar)
-        {
-            isCorrect = 0;
-        }
-    }
-    else if(state == unlockState)
-    {
-        // Add to tempPasscode
-        if(setPasscode[passCount] != displayChar)
-        {
-            isCorrect = 0;
-        }
-    }
 
-    
     // Display to LCD
     if (displayChar != '<')
     {
         if(displayChar > 34 && displayChar < 58)
         {
+            // Capturing into passcodes
+
+            if(state == initState)
+            {
+                // Add to setPasscode
+                setPasscode[passCount] = displayChar;
+                if(passCount == 6)
+                {
+                    setPasscode[6] = '\0';
+                }
+            }
+            else if(state == lockState)
+            {
+                // Add to tempPasscode
+                if(setPasscode[passCount] != displayChar)
+                {
+                    isCorrect = 0;
+                }
+            }
+            else if(state == unlockState)
+            {
+                // Add to tempPasscode
+                if(setPasscode[passCount] != displayChar)
+                {
+                    isCorrect = 0;
+                }
+            }
+            
             lcd_moveto(2,position);
             lcd_writedata(displayChar);
             passCount++;
@@ -158,7 +146,7 @@ void typeKeys()
         else
         {
             position = 0;
-            isCorrect = 1;
+//            isCorrect = 1;
         }
     }
 }
@@ -185,39 +173,41 @@ void readPassword()
     }
     if(passCount == 6)          // Conditions change state
     {
-        if(isCorrect)
+        if(state == initState)
         {
-            if(state == initState)
+            state = unlockState;
+        }
+        else
+        {
+            if(isCorrect)
             {
-                state = unlockState;
+                
+                if(state == unlockState)
+                {
+                    state = lockState;
+                }
+                else if(state == lockState)
+                {
+                    state = unlockState;
+                }
             }
-            else if(state == unlockState)
+            else if(!isCorrect)
             {
-                state = lockState;
-            }
-            else if(state == lockState)
-            {
-                state = unlockState;
+                
+                if(state == unlockState)
+                {
+                    state = unlockState;
+                }
+                else if(state == lockState)
+                {
+                    state = lockState;
+                }
             }
         }
-        else if(!isCorrect)
-        {
-            if(state == initState)
-            {
-                state = initState;
-            }
-            else if(state == unlockState)
-            {
-                state = unlockState;
-            }
-            else if(state == lockState)
-            {
-                state = lockState;
-            }
-        }
-        
+    
         
         passCount = 0;          // Reset condition
+        isCorrect = 1;
     }
     
 }
