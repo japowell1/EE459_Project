@@ -6,7 +6,7 @@
 //
 
 #include <stdio.h>
-#include <cstring>
+#include <string.h>
 #include "lcd.h"
 
 // TO DO
@@ -31,8 +31,9 @@ void initial();
 void lock();
 void unlock();
 void readPassword();
+char isCorrect;
 
-volatile char setPasscode[6], tempPasscode[6];
+volatile char setPasscode[7], tempPasscode[7];
 volatile int passCount;
 volatile int position, state;
 
@@ -84,19 +85,48 @@ void typeKeys()
     char displayChar;
     displayChar = Keypad();
     
+    char* currentPos = setPasscode;
+    char* currentTemp = tempPasscode;
+    
+    // Default flag to true
+    isCorrect = 1;
+    
     // Capturing into passcodes
     if(state == initState)
     {
         // Add to setPasscode
+        setPasscode[passCount] = displayChar;
+        if(passCount == 6)
+        {
+            setPasscode[6] = '\0';
+        }
     }
     else if(state == unlock)
     {
         // Add to tempPasscode
+        if(setPasscode[passCount] != displayChar)
+        {
+            // Set flag to false
+            isCorrect = 0;
+        }
     }
     else if(state == lockState)
     {
         // Add to tempPasscode
+        if(setPasscode[passCount] != displayChar)
+        {
+            isCorrect = 0;
+        }
     }
+    else if(state == unlockState)
+    {
+        // Add to tempPasscode
+        if(setPasscode[passCount] != displayChar)
+        {
+            isCorrect = 0;
+        }
+    }
+
     
     // Display to LCD
     if (displayChar != '<')
@@ -128,6 +158,7 @@ void typeKeys()
         else
         {
             position = 0;
+            isCorrect = 1;
         }
     }
 }
@@ -154,18 +185,38 @@ void readPassword()
     }
     if(passCount == 6)          // Conditions change state
     {
-        if(state == initState)
+        if(isCorrect)
         {
-            state = unlockState;
+            if(state == initState)
+            {
+                state = unlockState;
+            }
+            else if(state == unlockState)
+            {
+                state = lockState;
+            }
+            else if(state == lockState)
+            {
+                state = unlockState;
+            }
         }
-        else if(state == unlockState)
+        else if(!isCorrect)
         {
-            state = lockState;
+            if(state == initState)
+            {
+                state = initState;
+            }
+            else if(state == unlockState)
+            {
+                state = unlockState;
+            }
+            else if(state == lockState)
+            {
+                state = lockState;
+            }
         }
-        else if(state == lockState)
-        {
-            state = unlockState;
-        }
+        
+        
         passCount = 0;          // Reset condition
     }
     
