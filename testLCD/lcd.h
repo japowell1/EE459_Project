@@ -21,9 +21,9 @@
  */
 #define NIBBLE_HIGH                 // Use bits 4-7 for talking to LCD
 
-#define LCD_RS          (1 << PB4)
-#define LCD_RW          (1 << PB3)
-#define LCD_E           (1 << PB2)
+#define LCD_RS          (1 << PB4) //(1 << PB1) //
+#define LCD_RW          (1 << PB3) //(1 << PB0) //
+#define LCD_E           (1 << PB2) //(1 << PB7) //
 #define LCD_Bits        (LCD_RS|LCD_RW|LCD_E)
 
 #ifdef NIBBLE_HIGH

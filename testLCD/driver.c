@@ -19,6 +19,9 @@
  Use the "PROGMEM" attribute to store the strings in the ROM
  instead of in RAM.
  */
+
+#define TIME 10000
+
 #ifdef NIBBLE_HIGH
 const unsigned char str1[] PROGMEM = "Set password:";
 #else
@@ -31,7 +34,8 @@ void initial();
 void lock();
 void unlock();
 void readPassword();
-char isCorrect;
+volatile char isCorrect;
+volatile char buzz;
 
 volatile char setPasscode[7], tempPasscode[7];
 volatile int passCount;
@@ -44,38 +48,48 @@ enum states
     lockState
 };
 
+void BuzzerOn();
+void BuzzerOff();
+
 int main(void)
 {
-    
     lcd_init();                 // Initialize the LCD display
     lcd_clear();
     lcd_moveto(0, 0);
     
-    // Initialize Global Variables
+//    // Initialize Global Variables
     state = initState;
     position = 0;
     passCount = 0;
     isCorrect = 1;
-    
-    
+    buzz = 0;
+//
+//
+//
     while (1)
     {                 // Loop forever
-        // State Machine
+//        // State Machine
         if(state == initState)
         {
             initial();
+            readPassword();
+
         }
         else if(state == unlockState)
         {
             unlock();
+            readPassword();
+
         }
         else if(state == lockState)
         {
             lock();
+            readPassword();
+
         }
-        
-        readPassword();
-        
+
+//        readPassword();
+//
     }
     return 0;
 }
@@ -86,7 +100,7 @@ void typeKeys()
     char displayChar;
     displayChar = Keypad();
     
-    char* currentPos = setPasscode;
+//    char* currentPos = setPasscode;
 
     // Display to LCD
     if (displayChar != '<')
@@ -130,15 +144,7 @@ void typeKeys()
         {
             lcd_wait();
         }
-        //        if(count > 19){
-        //            count = 0;
-        //        }
-        //        if(displayChar=='*'){
-        //            state = 1;
-        //        }
-        //        if(displayChar=='#'){
-        //            state = 2;
-        //        }
+ 
         if(position < 5)
         {
             position++;
@@ -146,21 +152,8 @@ void typeKeys()
         else
         {
             position = 0;
-//            isCorrect = 1;
         }
     }
-}
-
-// Initial setup display
-void initial()
-{
-    
-    const unsigned char init_screen[] = "Set password:";
-    lcd_init();
-    lcd_clear();
-    lcd_moveto(0,0);
-    lcd_stringout((char *)init_screen);
-    lcd_moveto(2,0);
 }
 
 // Reads in 6 digit passcode and changes state accordingly
@@ -185,10 +178,12 @@ void readPassword()
                 if(state == unlockState)
                 {
                     state = lockState;
+                    buzz = 0;
                 }
                 else if(state == lockState)
                 {
                     state = unlockState;
+                    buzz = 0;
                 }
             }
             else if(!isCorrect)
@@ -201,15 +196,25 @@ void readPassword()
                 else if(state == lockState)
                 {
                     state = lockState;
+                    // Turn on Buzzer
+                    BuzzerOn();
                 }
             }
         }
-    
-        
         passCount = 0;          // Reset condition
         isCorrect = 1;
     }
-    
+}
+
+// Initial setup display
+void initial()
+{
+    const unsigned char init_screen[] = "Set password:";
+    lcd_init();
+    lcd_clear();
+    lcd_moveto(0,0);
+    lcd_stringout((char *)init_screen);
+    lcd_moveto(2,0);
 }
 
 // Displays lock screen
@@ -221,6 +226,9 @@ void lock()
     lcd_moveto(0,0);
     lcd_stringout((char *)lock_screen);
     lcd_moveto(2,0);
+    
+
+    
     
 }
 // Display unlock screen
@@ -235,5 +243,27 @@ void unlock()
     lcd_moveto(1,0);
     lcd_stringout((char *)enter);
     lcd_moveto(2,0);
+    BuzzerOff();
     
 }
+
+void BuzzerOn()
+{
+    DDRD |= 1 << DDD1;          // Set PORTC bit 0 for output
+    for(int i = 0; i < TIME; i++)
+    {
+        PORTD &= ~(1 << PD1);   // Set PD1 to a 0       // Causing shifted display
+        _delay_ms(0.12);
+        PORTD |= 1 << PD1;      // Set PD1 to a 1
+        _delay_ms(0.12);
+    }
+    
+    
+}
+//
+void BuzzerOff()
+{
+    DDRD &= ~(1 << DDD1);
+//    PORTD &= ~(1 << PD1);
+}
+
