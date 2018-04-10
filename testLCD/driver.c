@@ -100,8 +100,6 @@ void typeKeys()
     char displayChar;
     displayChar = Keypad();
     
-//    char* currentPos = setPasscode;
-
     // Display to LCD
     if (displayChar != '<')
     {
@@ -136,6 +134,7 @@ void typeKeys()
             }
             
             lcd_moveto(2,position);
+            displayChar = '*';
             lcd_writedata(displayChar);
             passCount++;
         }
