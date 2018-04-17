@@ -61,6 +61,9 @@ int main(void)
 {
     PCICR |= (1 << PCIE2);                          // Enable PIND Control Register interrupts
     PCMSK2 |= (1 << PCINT18);                       // Enable interrupts for PIND 2
+    
+//    PCICR |= (1 << PCIE0);                        // Enable PORTB interrupts
+//    PCMSK0 |= ((1 << PCINT3) | (1 << PCINT4));    // Enable interrupts for PB3 and PB4
     sei();                                          // Enables all interrupts
     
     
@@ -115,7 +118,15 @@ int main(void)
 }
 
 /*
- ISR for rotary encoder
+ISR for toggle
+ */
+ISR(PCINT0_vect)
+{
+    
+}
+
+/*
+ ISR for buzzer
  */
 ISR(PCINT2_vect)
 {
@@ -164,7 +175,7 @@ void typeKeys()
                     isCorrect = 0;
                 }
             }
-            displayChar = '*';
+//            displayChar = '*';
             lcd_writedata(displayChar);
             passCount++;
         }
