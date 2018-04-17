@@ -23,10 +23,15 @@ FUSES      = -U hfuse:w:0xd9:m -U lfuse:w:0xe0:m
 # Tune the lines below only if you know what you are doing:
 
 AVRDUDE = avrdude $(PROGRAMMER) -p $(DEVICE)
-COMPILE = avr-gcc -Wall -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE) 
+COMPILE = avr-gcc -Wall -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE) -std=c99
 
 # symbolic targets:
 all:	main.hex
+
+lcd.o: lcd.c lcd.h
+
+keypad.o: keypad.c keypad.h
+
 
 .c.o:
 	$(COMPILE) -c $< -o $@
