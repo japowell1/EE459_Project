@@ -75,7 +75,7 @@ int main(void)
     
     //    // Initialize Global Variables
     state = initState;
-    position = 0;
+    position = 2;
     passCount = 0;
     isCorrect = 1;
     buzz = 0;
@@ -130,7 +130,8 @@ void typeKeys()
 {
     char displayChar;
     displayChar = Keypad();
-    
+    lcd_moveto(2,position);
+
     // Display to LCD
     if (displayChar != '<')
     {
@@ -163,8 +164,6 @@ void typeKeys()
                     isCorrect = 0;
                 }
             }
-            
-            lcd_moveto(2,position);
             displayChar = '*';
             lcd_writedata(displayChar);
             passCount++;
@@ -176,13 +175,13 @@ void typeKeys()
             lcd_wait();
         }
         
-        if(position < 5)
+        if(position < 7)
         {
             position++;
         }
         else
         {
-            position = 0;
+            position = 2;
         }
     }
 }
@@ -266,8 +265,8 @@ void initial()
     lcd_moveto(0,0);
     lcd_stringout((char *)init_screen);
     lcd_moveto(2,0);
-//    lcd_stringout(">");
-//    lcd_moveto(2,2);
+    lcd_stringout(">");
+    lcd_moveto(2,position);
 }
 
 // Displays lock screen
@@ -280,8 +279,8 @@ void lock()
     lcd_moveto(0,0);
     lcd_stringout((char *)lock_screen);
     lcd_moveto(2,0);
-//    lcd_stringout(">");
-//    lcd_moveto(2,2);
+    lcd_stringout(">");
+    lcd_moveto(2,position);
 
 }
 // Display unlock screen
@@ -297,8 +296,8 @@ void unlock()
     lcd_moveto(1,0);
     lcd_stringout((char *)enter);
     lcd_moveto(2,0);
-//    lcd_stringout(">");
-//    lcd_moveto(2,2);
+    lcd_stringout(">");
+    lcd_moveto(2,position);
     BuzzerOff();
     
     
