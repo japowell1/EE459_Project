@@ -40,11 +40,11 @@ void lock();
 void unlock();
 void readPassword();
 volatile char isCorrect;
-volatile char buzz;
+volatile char buzz, toggle;
 
 volatile char setPasscode[7], tempPasscode[7];
 volatile int passCount;
-volatile int position, state, lockCount;
+volatile int position, state, lockCount, offset, pos, posLock, posReset;
 
 enum states
 {
@@ -61,14 +61,15 @@ int main(void)
 {
     PCICR |= (1 << PCIE2);                          // Enable PIND Control Register interrupts
     PCMSK2 |= (1 << PCINT18);                       // Enable interrupts for PIND 2
+
+    PCICR |= (1 << PCIE0);                          // Enable PIND Control Register interrupts
+    PCMSK0 |= (1 << PCINT2);                       // Enable interrupts for PIND 2
     
-//    PCICR |= (1 << PCIE0);                        // Enable PORTB interrupts
-//    PCMSK0 |= ((1 << PCINT3) | (1 << PCINT4));    // Enable interrupts for PB3 and PB4
     sei();                                          // Enables all interrupts
     
     
     DDRD |= (1 << DDD3);                            // OUTPUT Pi
-//    PORTD |= (1 << DDD3); // INPUT Pi
+    PORTB |= (1 << PB2);        // INPUT Pi
     
     
     
@@ -78,12 +79,16 @@ int main(void)
     
     //    // Initialize Global Variables
     state = initState;
-    position = 2;
+    position = 1;
+    toggle = 0;
     passCount = 0;
     isCorrect = 1;
     buzz = 0;
     lockCount = 0;
-    
+    offset = 0;
+    pos = 0;
+    posLock = 0;
+    posReset = 0;
     
     
     
@@ -92,19 +97,21 @@ int main(void)
                 // State Machine
         if(state == initState)
         {
+            offset = 0;
             initial();
             readPassword();
 
         }
         else if(state == unlockState)
         {
+            offset = 10;
             PORTD &= ~(1 << PD3);
             unlock();
             readPassword();
-
         }
         else if(state == lockState)
         {
+            offset = 0;
             PORTD |= 1 << PD3;
             lock();
             readPassword();
@@ -122,7 +129,36 @@ ISR for toggle
  */
 ISR(PCINT0_vect)
 {
-    
+    unsigned char btnPress = (PINB & (1 << PB2));
+    if (state == unlockState)
+    {
+        char clear[] = "        ";  // 8 spaces
+        char arrow[] = ">";
+
+        if (!btnPress && !toggle)
+        {
+            _delay_ms(200);         // Debounce button
+            position = 1;
+            lcd_moveto(1, 9);
+            lcd_stringout((char *)clear);
+            lcd_moveto(2, 10);
+            lcd_stringout((char *)arrow);
+            toggle = 1;
+        }
+        else if (!btnPress && toggle)
+        {
+            _delay_ms(200);
+            position = 1;
+            lcd_moveto(2, 9);
+            lcd_stringout((char *)clear);
+            lcd_moveto(1, 10);
+            lcd_stringout((char *)arrow);
+            toggle = 0;
+            _delay_ms(100);
+        }
+        
+        passCount = 0;              // Reset passCount
+    }
 }
 
 /*
@@ -131,9 +167,10 @@ ISR(PCINT0_vect)
 ISR(PCINT2_vect)
 {
 //    BuzzerOn();
-//    buzz = 1;
+    buzz = 1;
     lcd_moveto(3,0);
     lcd_writedata('p');
+    
 }
                
                
@@ -141,7 +178,14 @@ void typeKeys()
 {
     char displayChar;
     displayChar = Keypad();
-    lcd_moveto(2,position);
+    pos = position + offset;
+    
+    if (toggle == 0 && (state==unlockState))
+        lcd_moveto(1,pos);
+//    else if (toggle == 1 && (state==unlockState))
+//        lcd_moveto(2,pos);
+    else
+        lcd_moveto(2,pos);
 
     // Display to LCD
     if (displayChar != '<')
@@ -174,6 +218,11 @@ void typeKeys()
                 {
                     isCorrect = 0;
                 }
+//                if(displayChar == '#')
+//                {
+//                    toggle = !toggle;
+////                    passCount = 6;
+//                }
             }
 //            displayChar = '*';
             lcd_writedata(displayChar);
@@ -186,13 +235,20 @@ void typeKeys()
             lcd_wait();
         }
         
+//        if(state == unlockState)
+//        {
+//            if(toggle==0)
+//                posLock++;
+//            if(toggle==1)
+//                posReset++;
+//        }
         if(position < 7)
         {
             position++;
         }
         else
         {
-            position = 2;
+            position = 1;
         }
     }
 }
@@ -204,18 +260,18 @@ void readPassword()
     while(passCount < 6)
     {
         typeKeys();
-        if(lockCount == 10)
+        if(lockCount == 10 && (buzz == 1))
         {
-//            BuzzerOn();
+            BuzzerOn();
             lockCount = 0;
         }
         else
         {
-            if(state == lockState)          // Sets alarm on loop
+            if(state == lockState && (buzz == 1))          // Sets alarm on loop
             {
                 lockCount++;
                 int k;
-                for(k = 0; k < 2; k++)
+                for(k = 0; k < 10; k++)
                 {
                     lcd_wait();
                     typeKeys();
@@ -236,14 +292,21 @@ void readPassword()
                 
                 if(state == unlockState)
                 {
-                    state = lockState;
-                    buzz = 0;
+                    if(toggle == 0)
+                    {
+                        state = lockState;
+                    }
+                    else if(toggle == 1)
+                    {
+                        state = initState;
+                    }
+                    
                 }
                 else if(state == lockState)
                 {
                     state = unlockState;
-                    buzz = 0;
                 }
+                buzz = 0;
             }
             else if(!isCorrect)
             {
@@ -256,13 +319,14 @@ void readPassword()
                 else if(state == lockState)
                 {
                     state = lockState;
-                    buzz = 1;
+//                    buzz = 1;
                     // Turn on Buzzer
                     //                    BuzzerOn();
                 }
             }
         }
         passCount = 0;          // Reset condition
+        position = 1;
         isCorrect = 1;
     }
 }
@@ -270,7 +334,7 @@ void readPassword()
 // Initial setup display
 void initial()
 {
-    const unsigned char init_screen[] = "Set password:";
+    const unsigned char init_screen[] = "*** SET PASSWORD ***";
     lcd_init();
     lcd_clear();
     lcd_moveto(0,0);
@@ -278,13 +342,13 @@ void initial()
     lcd_moveto(2,0);
     lcd_stringout(">");
     lcd_moveto(2,position);
+    toggle = 0;
 }
 
 // Displays lock screen
 void lock()
 {
-    lcd_moveto(0,12);
-    char lock_screen[] = "LOCKED";
+    char lock_screen[] = "****** LOCKED ******";
     lcd_init();
     lcd_clear();
     lcd_moveto(0,0);
@@ -297,21 +361,31 @@ void lock()
 // Display unlock screen
 void unlock()
 {
-    lcd_moveto(0,12);
-    char unlock_screen[] = "UNLOCKED";
-    char enter[] = "Enter pwd to lock:";
+    char unlock_screen[] = "***** UNLOCKED *****";
+    char enter[] =          "To lock : ";
+    char enterToReset[] =   "To reset: ";
+    char arrow[] = ">";
     lcd_init();
     lcd_clear();
     lcd_moveto(0,0);
     lcd_stringout((char *)unlock_screen);
+    
     lcd_moveto(1,0);
     lcd_stringout((char *)enter);
+    if(!toggle)
+    {
+        lcd_stringout((char*)arrow);
+    }
+
     lcd_moveto(2,0);
-    lcd_stringout(">");
-    lcd_moveto(2,position);
+    lcd_stringout((char *)enterToReset);
+    if(toggle)
+    {
+        lcd_stringout((char*)arrow);
+    }
+    
+    
     BuzzerOff();
-    
-    
 }
 
 void BuzzerOn()
