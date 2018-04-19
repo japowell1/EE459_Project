@@ -10,29 +10,7 @@
 #include <avr/interrupt.h>
 #include "lcd.h"
 
-// TO DO
-// char manipulations with password check and append
-// Order SD card and cable
-// Need power strips
-// Attach keypad
-
-/*
- Use the "PROGMEM" attribute to store the strings in the ROM
- instead of in RAM.
- */
-
-
-
-
-
 #define TIME 1000
-
-#ifdef NIBBLE_HIGH
-const unsigned char str1[] PROGMEM = "Set password:";
-#else
-const unsigned char str2[] PROGMEM = "LOCKED";
-#endif
-const unsigned char str3[] PROGMEM = "Enter password:";
 
 void typeKeys();
 void initial();
@@ -117,9 +95,7 @@ int main(void)
             readPassword();
 
         }
-        
         //        readPassword();
-        //
     }
     return 0;
 }
@@ -170,7 +146,6 @@ ISR(PCINT2_vect)
     buzz = 1;
     lcd_moveto(3,0);
     lcd_writedata('p');
-    
 }
                
                
@@ -182,8 +157,6 @@ void typeKeys()
     
     if (toggle == 0 && (state==unlockState))
         lcd_moveto(1,pos);
-//    else if (toggle == 1 && (state==unlockState))
-//        lcd_moveto(2,pos);
     else
         lcd_moveto(2,pos);
 
@@ -218,13 +191,8 @@ void typeKeys()
                 {
                     isCorrect = 0;
                 }
-//                if(displayChar == '#')
-//                {
-//                    toggle = !toggle;
-////                    passCount = 6;
-//                }
             }
-//            displayChar = '*';
+            displayChar = '*';
             lcd_writedata(displayChar);
             passCount++;
         }
@@ -235,13 +203,6 @@ void typeKeys()
             lcd_wait();
         }
         
-//        if(state == unlockState)
-//        {
-//            if(toggle==0)
-//                posLock++;
-//            if(toggle==1)
-//                posReset++;
-//        }
         if(position < 7)
         {
             position++;
@@ -393,7 +354,7 @@ void BuzzerOn()
     DDRD |= 1 << DDD1;          // Set PORTC bit 0 for output
     for(int i = 0; i < TIME; i++)
     {
-        PORTD &= ~(1 << PD1);   // Set PD1 to a 0       // Causing shifted display
+        PORTD &= ~(1 << PD1);   // Set PD1 to a 0
         _delay_ms(0.12);
         PORTD |= 1 << PD1;      // Set PD1 to a 1
         _delay_ms(0.12);
